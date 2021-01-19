@@ -1,0 +1,787 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "factoryName": {
+            "type": "string",
+            "metadata": "Data Factory name",
+            "defaultValue": "qde-df32"
+        },
+        "TriggerSchedule_properties_pipeline_parameters_year": {
+            "type": "int",
+            "defaultValue": 2021
+        },
+        "TriggerSchedule_properties_pipeline_parameters_month": {
+            "type": "int",
+            "defaultValue": 1
+        },
+        "TriggerSchedule_properties_pipeline_parameters_day": {
+            "type": "int",
+            "defaultValue": 18
+        }
+    },
+    "variables": {
+        "factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+    },
+    "resources": [
+        {
+            "name": "[concat(parameters('factoryName'), '/suppliersParquet')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "qde_AzureDataLakeStorageLS",
+                    "type": "LinkedServiceReference"
+                },
+                "parameters": {
+                    "year_p": {
+                        "type": "int",
+                        "defaultValue": 1996
+                    },
+                    "month_p": {
+                        "type": "int",
+                        "defaultValue": 7
+                    },
+                    "day_p": {
+                        "type": "int",
+                        "defaultValue": 16
+                    }
+                },
+                "folder": {
+                    "name": "preparedNorthwindDS"
+                },
+                "annotations": [],
+                "type": "Parquet",
+                "typeProperties": {
+                    "location": {
+                        "type": "AzureBlobFSLocation",
+                        "folderPath": {
+                            "value": "@concat('prepared/suppliers/year=', string(dataset().year_p), '/month=', string(dataset().month_p), '/day=', string(dataset().day_p))",
+                            "type": "Expression"
+                        },
+                        "fileSystem": "northwind"
+                    },
+                    "compressionCodec": "snappy"
+                },
+                "schema": []
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/shippersParquet')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "qde_AzureDataLakeStorageLS",
+                    "type": "LinkedServiceReference"
+                },
+                "parameters": {
+                    "year_p": {
+                        "type": "int",
+                        "defaultValue": 1996
+                    },
+                    "month_p": {
+                        "type": "int",
+                        "defaultValue": 7
+                    },
+                    "day_p": {
+                        "type": "int",
+                        "defaultValue": 16
+                    }
+                },
+                "folder": {
+                    "name": "preparedNorthwindDS"
+                },
+                "annotations": [],
+                "type": "Parquet",
+                "typeProperties": {
+                    "location": {
+                        "type": "AzureBlobFSLocation",
+                        "folderPath": {
+                            "value": "@concat('prepared/shippers/year=', string(dataset().year_p), '/month=', string(dataset().month_p), '/day=', string(dataset().day_p))",
+                            "type": "Expression"
+                        },
+                        "fileSystem": "northwind"
+                    },
+                    "compressionCodec": "snappy"
+                },
+                "schema": []
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/territoriesParquet')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "qde_AzureDataLakeStorageLS",
+                    "type": "LinkedServiceReference"
+                },
+                "parameters": {
+                    "year_p": {
+                        "type": "int",
+                        "defaultValue": 1996
+                    },
+                    "month_p": {
+                        "type": "int",
+                        "defaultValue": 7
+                    },
+                    "day_p": {
+                        "type": "int",
+                        "defaultValue": 16
+                    }
+                },
+                "folder": {
+                    "name": "preparedNorthwindDS"
+                },
+                "annotations": [],
+                "type": "Parquet",
+                "typeProperties": {
+                    "location": {
+                        "type": "AzureBlobFSLocation",
+                        "folderPath": {
+                            "value": "@concat('prepared/territories/year=', string(dataset().year_p), '/month=', string(dataset().month_p), '/day=', string(dataset().day_p))",
+                            "type": "Expression"
+                        },
+                        "fileSystem": "northwind"
+                    },
+                    "compressionCodec": "snappy"
+                },
+                "schema": []
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/northwindDumps')]",
+            "type": "Microsoft.DataFactory/factories/pipelines",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "activities": [
+                    {
+                        "name": "CategoriesCopy",
+                        "type": "Copy",
+                        "dependsOn": [],
+                        "policy": {
+                            "timeout": "7.00:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "source": {
+                                "type": "AzureSqlSource",
+                                "queryTimeout": "02:00:00",
+                                "partitionOption": "None"
+                            },
+                            "sink": {
+                                "type": "ParquetSink",
+                                "storeSettings": {
+                                    "type": "AzureBlobFSWriteSettings"
+                                },
+                                "formatSettings": {
+                                    "type": "ParquetWriteSettings"
+                                }
+                            },
+                            "enableStaging": false,
+                            "translator": {
+                                "type": "TabularTranslator",
+                                "typeConversion": true,
+                                "typeConversionSettings": {
+                                    "allowDataTruncation": true,
+                                    "treatBooleanAsNumber": false
+                                }
+                            }
+                        },
+                        "inputs": [
+                            {
+                                "referenceName": "categoriesTable",
+                                "type": "DatasetReference",
+                                "parameters": {}
+                            }
+                        ],
+                        "outputs": [
+                            {
+                                "referenceName": "categoriesParquet",
+                                "type": "DatasetReference",
+                                "parameters": {
+                                    "year_p": {
+                                        "value": "@pipeline().parameters.year",
+                                        "type": "Expression"
+                                    },
+                                    "month_p": {
+                                        "value": "@pipeline().parameters.month",
+                                        "type": "Expression"
+                                    },
+                                    "day_p": {
+                                        "value": "@pipeline().parameters.day",
+                                        "type": "Expression"
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "name": "CustomersCopy",
+                        "type": "Copy",
+                        "dependsOn": [],
+                        "policy": {
+                            "timeout": "7.00:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "source": {
+                                "type": "AzureSqlSource",
+                                "queryTimeout": "02:00:00",
+                                "partitionOption": "None"
+                            },
+                            "sink": {
+                                "type": "ParquetSink",
+                                "storeSettings": {
+                                    "type": "AzureBlobFSWriteSettings"
+                                },
+                                "formatSettings": {
+                                    "type": "ParquetWriteSettings"
+                                }
+                            },
+                            "enableStaging": false,
+                            "translator": {
+                                "type": "TabularTranslator",
+                                "typeConversion": true,
+                                "typeConversionSettings": {
+                                    "allowDataTruncation": true,
+                                    "treatBooleanAsNumber": false
+                                }
+                            }
+                        },
+                        "inputs": [
+                            {
+                                "referenceName": "customersTable",
+                                "type": "DatasetReference",
+                                "parameters": {}
+                            }
+                        ],
+                        "outputs": [
+                            {
+                                "referenceName": "customersParquet",
+                                "type": "DatasetReference",
+                                "parameters": {
+                                    "year_p": {
+                                        "value": "@pipeline().parameters.year",
+                                        "type": "Expression"
+                                    },
+                                    "month_p": {
+                                        "value": "@pipeline().parameters.month",
+                                        "type": "Expression"
+                                    },
+                                    "day_p": {
+                                        "value": "@pipeline().parameters.day",
+                                        "type": "Expression"
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "name": "EmployeesCopy",
+                        "type": "Copy",
+                        "dependsOn": [],
+                        "policy": {
+                            "timeout": "7.00:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "source": {
+                                "type": "AzureSqlSource",
+                                "queryTimeout": "02:00:00",
+                                "partitionOption": "None"
+                            },
+                            "sink": {
+                                "type": "ParquetSink",
+                                "storeSettings": {
+                                    "type": "AzureBlobFSWriteSettings"
+                                },
+                                "formatSettings": {
+                                    "type": "ParquetWriteSettings"
+                                }
+                            },
+                            "enableStaging": false,
+                            "translator": {
+                                "type": "TabularTranslator",
+                                "typeConversion": true,
+                                "typeConversionSettings": {
+                                    "allowDataTruncation": true,
+                                    "treatBooleanAsNumber": false
+                                }
+                            }
+                        },
+                        "inputs": [
+                            {
+                                "referenceName": "employeesTable",
+                                "type": "DatasetReference",
+                                "parameters": {}
+                            }
+                        ],
+                        "outputs": [
+                            {
+                                "referenceName": "employeesParquet",
+                                "type": "DatasetReference",
+                                "parameters": {
+                                    "year_p": {
+                                        "value": "@pipeline().parameters.year",
+                                        "type": "Expression"
+                                    },
+                                    "month_p": {
+                                        "value": "@pipeline().parameters.month",
+                                        "type": "Expression"
+                                    },
+                                    "day_p": {
+                                        "value": "@pipeline().parameters.day",
+                                        "type": "Expression"
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "name": "OrderDetailsCopy",
+                        "type": "Copy",
+                        "dependsOn": [],
+                        "policy": {
+                            "timeout": "7.00:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "source": {
+                                "type": "AzureSqlSource",
+                                "queryTimeout": "02:00:00",
+                                "partitionOption": "None"
+                            },
+                            "sink": {
+                                "type": "ParquetSink",
+                                "storeSettings": {
+                                    "type": "AzureBlobFSWriteSettings"
+                                },
+                                "formatSettings": {
+                                    "type": "ParquetWriteSettings"
+                                }
+                            },
+                            "enableStaging": false,
+                            "translator": {
+                                "type": "TabularTranslator",
+                                "typeConversion": true,
+                                "typeConversionSettings": {
+                                    "allowDataTruncation": true,
+                                    "treatBooleanAsNumber": false
+                                }
+                            }
+                        },
+                        "inputs": [
+                            {
+                                "referenceName": "orderDetailsTable",
+                                "type": "DatasetReference",
+                                "parameters": {}
+                            }
+                        ],
+                        "outputs": [
+                            {
+                                "referenceName": "orderDetailsParquet",
+                                "type": "DatasetReference",
+                                "parameters": {
+                                    "year_p": {
+                                        "value": "@pipeline().parameters.year",
+                                        "type": "Expression"
+                                    },
+                                    "month_p": {
+                                        "value": "@pipeline().parameters.month",
+                                        "type": "Expression"
+                                    },
+                                    "day_p": {
+                                        "value": "@pipeline().parameters.day",
+                                        "type": "Expression"
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "name": "ProductsCopy",
+                        "type": "Copy",
+                        "dependsOn": [],
+                        "policy": {
+                            "timeout": "7.00:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "source": {
+                                "type": "AzureSqlSource",
+                                "queryTimeout": "02:00:00",
+                                "partitionOption": "None"
+                            },
+                            "sink": {
+                                "type": "ParquetSink",
+                                "storeSettings": {
+                                    "type": "AzureBlobFSWriteSettings"
+                                },
+                                "formatSettings": {
+                                    "type": "ParquetWriteSettings"
+                                }
+                            },
+                            "enableStaging": false,
+                            "translator": {
+                                "type": "TabularTranslator",
+                                "typeConversion": true,
+                                "typeConversionSettings": {
+                                    "allowDataTruncation": true,
+                                    "treatBooleanAsNumber": false
+                                }
+                            }
+                        },
+                        "inputs": [
+                            {
+                                "referenceName": "productsTable",
+                                "type": "DatasetReference",
+                                "parameters": {}
+                            }
+                        ],
+                        "outputs": [
+                            {
+                                "referenceName": "productsParquet",
+                                "type": "DatasetReference",
+                                "parameters": {
+                                    "year_p": {
+                                        "value": "@pipeline().parameters.year",
+                                        "type": "Expression"
+                                    },
+                                    "month_p": {
+                                        "value": "@pipeline().parameters.month",
+                                        "type": "Expression"
+                                    },
+                                    "day_p": {
+                                        "value": "@pipeline().parameters.day",
+                                        "type": "Expression"
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "name": "ShippersCopy",
+                        "type": "Copy",
+                        "dependsOn": [],
+                        "policy": {
+                            "timeout": "7.00:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "source": {
+                                "type": "AzureSqlSource",
+                                "queryTimeout": "02:00:00",
+                                "partitionOption": "None"
+                            },
+                            "sink": {
+                                "type": "ParquetSink",
+                                "storeSettings": {
+                                    "type": "AzureBlobFSWriteSettings"
+                                },
+                                "formatSettings": {
+                                    "type": "ParquetWriteSettings"
+                                }
+                            },
+                            "enableStaging": false,
+                            "translator": {
+                                "type": "TabularTranslator",
+                                "typeConversion": true,
+                                "typeConversionSettings": {
+                                    "allowDataTruncation": true,
+                                    "treatBooleanAsNumber": false
+                                }
+                            }
+                        },
+                        "inputs": [
+                            {
+                                "referenceName": "shippersTable",
+                                "type": "DatasetReference",
+                                "parameters": {}
+                            }
+                        ],
+                        "outputs": [
+                            {
+                                "referenceName": "shippersParquet",
+                                "type": "DatasetReference",
+                                "parameters": {
+                                    "year_p": {
+                                        "value": "@pipeline().parameters.year",
+                                        "type": "Expression"
+                                    },
+                                    "month_p": {
+                                        "value": "@pipeline().parameters.month",
+                                        "type": "Expression"
+                                    },
+                                    "day_p": {
+                                        "value": "@pipeline().parameters.day",
+                                        "type": "Expression"
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "name": "SuppliersCopy",
+                        "type": "Copy",
+                        "dependsOn": [],
+                        "policy": {
+                            "timeout": "7.00:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "source": {
+                                "type": "AzureSqlSource",
+                                "queryTimeout": "02:00:00",
+                                "partitionOption": "None"
+                            },
+                            "sink": {
+                                "type": "ParquetSink",
+                                "storeSettings": {
+                                    "type": "AzureBlobFSWriteSettings"
+                                },
+                                "formatSettings": {
+                                    "type": "ParquetWriteSettings"
+                                }
+                            },
+                            "enableStaging": false,
+                            "translator": {
+                                "type": "TabularTranslator",
+                                "typeConversion": true,
+                                "typeConversionSettings": {
+                                    "allowDataTruncation": true,
+                                    "treatBooleanAsNumber": false
+                                }
+                            }
+                        },
+                        "inputs": [
+                            {
+                                "referenceName": "suppliersTable",
+                                "type": "DatasetReference",
+                                "parameters": {}
+                            }
+                        ],
+                        "outputs": [
+                            {
+                                "referenceName": "suppliersParquet",
+                                "type": "DatasetReference",
+                                "parameters": {
+                                    "year_p": {
+                                        "value": "@pipeline().parameters.year",
+                                        "type": "Expression"
+                                    },
+                                    "month_p": {
+                                        "value": "@pipeline().parameters.month",
+                                        "type": "Expression"
+                                    },
+                                    "day_p": {
+                                        "value": "@pipeline().parameters.day",
+                                        "type": "Expression"
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "name": "prepareOrdersCopy",
+                        "type": "Copy",
+                        "dependsOn": [],
+                        "policy": {
+                            "timeout": "7.00:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "source": {
+                                "type": "AzureSqlSource",
+                                "queryTimeout": "02:00:00",
+                                "partitionOption": "None"
+                            },
+                            "sink": {
+                                "type": "ParquetSink",
+                                "storeSettings": {
+                                    "type": "AzureBlobFSWriteSettings"
+                                },
+                                "formatSettings": {
+                                    "type": "ParquetWriteSettings"
+                                }
+                            },
+                            "enableStaging": false,
+                            "translator": {
+                                "type": "TabularTranslator",
+                                "typeConversion": true,
+                                "typeConversionSettings": {
+                                    "allowDataTruncation": true,
+                                    "treatBooleanAsNumber": false
+                                }
+                            }
+                        },
+                        "inputs": [
+                            {
+                                "referenceName": "ordersTable",
+                                "type": "DatasetReference",
+                                "parameters": {}
+                            }
+                        ],
+                        "outputs": [
+                            {
+                                "referenceName": "ordersParquet",
+                                "type": "DatasetReference",
+                                "parameters": {
+                                    "year_p": {
+                                        "value": "@pipeline().parameters.year",
+                                        "type": "Expression"
+                                    },
+                                    "month_p": {
+                                        "value": "@pipeline().parameters.month",
+                                        "type": "Expression"
+                                    },
+                                    "day_p": {
+                                        "value": "@pipeline().parameters.day",
+                                        "type": "Expression"
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                ],
+                "parameters": {
+                    "year": {
+                        "type": "int",
+                        "defaultValue": 1996
+                    },
+                    "month": {
+                        "type": "int",
+                        "defaultValue": 7
+                    },
+                    "day": {
+                        "type": "int",
+                        "defaultValue": 16
+                    }
+                },
+                "folder": {
+                    "name": "PreparePL"
+                },
+                "annotations": [],
+                "lastPublishTime": "2021-01-18T21:02:39Z"
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/datasets/shippersParquet')]",
+                "[concat(variables('factoryId'), '/datasets/suppliersParquet')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/prepareOrders')]",
+            "type": "Microsoft.DataFactory/factories/dataflows",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "folder": {
+                    "name": "northwind"
+                },
+                "type": "MappingDataFlow",
+                "typeProperties": {
+                    "sources": [
+                        {
+                            "dataset": {
+                                "referenceName": "ordersTable",
+                                "type": "DatasetReference"
+                            },
+                            "name": "OrdersTable"
+                        }
+                    ],
+                    "sinks": [
+                        {
+                            "dataset": {
+                                "referenceName": "ordersParquet",
+                                "type": "DatasetReference"
+                            },
+                            "name": "OrdersParquet"
+                        }
+                    ],
+                    "transformations": [
+                        {
+                            "name": "DerivedColumnYearMonthDay"
+                        },
+                        {
+                            "name": "FilterRows"
+                        }
+                    ],
+                    "script": "parameters{\n\tyear_p as integer (1996),\n\tmonth_p as integer (7),\n\tday_p as integer (15)\n}\nsource(output(\n\t\tOrderID as integer,\n\t\tCustomerID as string,\n\t\tEmployeeID as integer,\n\t\tOrderDate as timestamp,\n\t\tRequiredDate as timestamp,\n\t\tShippedDate as timestamp,\n\t\tShipVia as integer,\n\t\tFreight as decimal(19,4),\n\t\tShipName as string,\n\t\tShipAddress as string,\n\t\tShipCity as string,\n\t\tShipRegion as string,\n\t\tShipPostalCode as string,\n\t\tShipCountry as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tisolationLevel: 'READ_UNCOMMITTED',\n\tformat: 'table') ~> OrdersTable\nFilterRows derive(year = year(OrderDate),\n\t\tmonth = month(OrderDate),\n\t\tday = dayOfMonth(OrderDate),\n\tpartitionBy('key',\n\t\t0,\n\t\tyear,\n\t\tmonth,\n\t\tday\n\t)) ~> DerivedColumnYearMonthDay\nOrdersTable filter(coalesce(ShippedDate, OrderDate)==toTimestamp(toString($month_p) + '/' + toString($day_p) + '/' + toString($year_p), 'MM/dd/yyyy')) ~> FilterRows\nDerivedColumnYearMonthDay sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tformat: 'parquet',\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> OrdersParquet"
+                }
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/TriggerSchedule')]",
+            "type": "Microsoft.DataFactory/factories/triggers",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "description": "Tumbling window trigger",
+                "annotations": [],
+                "runtimeState": "Started",
+                "pipeline": {
+                    "pipelineReference": {
+                        "referenceName": "northwindDumps",
+                        "type": "PipelineReference"
+                    },
+                    "parameters": {
+                        "year": "[parameters('TriggerSchedule_properties_pipeline_parameters_year')]",
+                        "month": "[parameters('TriggerSchedule_properties_pipeline_parameters_month')]",
+                        "day": "[parameters('TriggerSchedule_properties_pipeline_parameters_day')]"
+                    }
+                },
+                "type": "TumblingWindowTrigger",
+                "typeProperties": {
+                    "frequency": "Minute",
+                    "interval": 15,
+                    "startTime": "2021-01-18T19:48:00Z",
+                    "endTime": "2021-01-19T19:55:00Z",
+                    "delay": "00:00:00",
+                    "maxConcurrency": 50,
+                    "retryPolicy": {
+                        "intervalInSeconds": 30
+                    },
+                    "dependsOn": []
+                }
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/pipelines/northwindDumps')]"
+            ]
+        }
+    ]
+}

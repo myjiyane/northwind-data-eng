@@ -1,0 +1,104 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "factoryName": {
+            "type": "string",
+            "metadata": "Data Factory name",
+            "defaultValue": "qde-df32"
+        },
+        "qde_azureSqlDatabaseLS_connectionString": {
+            "type": "secureString",
+            "metadata": "Secure string for 'connectionString' of 'qde_azureSqlDatabaseLS'"
+        },
+        "TriggerSchedule_properties_pipeline_parameters_year": {
+            "type": "int",
+            "defaultValue": 2021
+        },
+        "TriggerSchedule_properties_pipeline_parameters_month": {
+            "type": "int",
+            "defaultValue": 1
+        },
+        "TriggerSchedule_properties_pipeline_parameters_day": {
+            "type": "int",
+            "defaultValue": 18
+        },
+        "qde_KeyVaultLS_properties_typeProperties_baseUrl": {
+            "type": "string",
+            "defaultValue": "https://qde-credentialstorate32.vault.azure.net/"
+        },
+        "qde_AzureDataLakeStorageLS_properties_typeProperties_url": {
+            "type": "string",
+            "defaultValue": "https://qestoragenorthwind.dfs.core.windows.net/"
+        },
+        "containerUri": {
+            "type": "string",
+            "metadata": "URI to storage account containing linked ARM templates"
+        },
+        "containerSasToken": {
+            "type": "string",
+            "metadata": "Sas token to storage account containing linked ARM templates"
+        }
+    },
+    "variables": {
+        "factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+    },
+    "resources": [
+        {
+            "name": "qde-df32_ArmTemplate_0",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2018-02-01",
+            "properties": {
+                "mode": "incremental",
+                "templateLink": {
+                    "uri": "[concat(parameters('containerUri'), '/ArmTemplate_0.json', parameters('containerSasToken'))]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "factoryName": {
+                        "value": "[parameters('factoryName')]"
+                    },
+                    "qde_azureSqlDatabaseLS_connectionString": {
+                        "value": "[parameters('qde_azureSqlDatabaseLS_connectionString')]"
+                    },
+                    "qde_KeyVaultLS_properties_typeProperties_baseUrl": {
+                        "value": "[parameters('qde_KeyVaultLS_properties_typeProperties_baseUrl')]"
+                    },
+                    "qde_AzureDataLakeStorageLS_properties_typeProperties_url": {
+                        "value": "[parameters('qde_AzureDataLakeStorageLS_properties_typeProperties_url')]"
+                    }
+                }
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "qde-df32_ArmTemplate_1",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2018-02-01",
+            "properties": {
+                "mode": "incremental",
+                "templateLink": {
+                    "uri": "[concat(parameters('containerUri'), '/ArmTemplate_1.json', parameters('containerSasToken'))]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "factoryName": {
+                        "value": "[parameters('factoryName')]"
+                    },
+                    "TriggerSchedule_properties_pipeline_parameters_year": {
+                        "value": "[parameters('TriggerSchedule_properties_pipeline_parameters_year')]"
+                    },
+                    "TriggerSchedule_properties_pipeline_parameters_month": {
+                        "value": "[parameters('TriggerSchedule_properties_pipeline_parameters_month')]"
+                    },
+                    "TriggerSchedule_properties_pipeline_parameters_day": {
+                        "value": "[parameters('TriggerSchedule_properties_pipeline_parameters_day')]"
+                    }
+                }
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Resources/deployments', 'qde-df32_ArmTemplate_0')]"
+            ]
+        }
+    ]
+}
