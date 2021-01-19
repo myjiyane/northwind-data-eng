@@ -1,0 +1,995 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "factoryName": {
+            "type": "string",
+            "metadata": "Data Factory name",
+            "defaultValue": "qde-df32"
+        },
+        "qde_azureSqlDatabaseLS_connectionString": {
+            "type": "secureString",
+            "metadata": "Secure string for 'connectionString' of 'qde_azureSqlDatabaseLS'"
+        },
+        "qde_KeyVaultLS_properties_typeProperties_baseUrl": {
+            "type": "string",
+            "defaultValue": "https://qde-credentialstorate32.vault.azure.net/"
+        },
+        "qde_AzureDataLakeStorageLS_properties_typeProperties_url": {
+            "type": "string",
+            "defaultValue": "https://qestoragenorthwind.dfs.core.windows.net/"
+        }
+    },
+    "variables": {
+        "factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+    },
+    "resources": [
+        {
+            "name": "[concat(parameters('factoryName'), '/qde_KeyVaultLS')]",
+            "type": "Microsoft.DataFactory/factories/linkedServices",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "annotations": [],
+                "type": "AzureKeyVault",
+                "typeProperties": {
+                    "baseUrl": "[parameters('qde_KeyVaultLS_properties_typeProperties_baseUrl')]"
+                }
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/qde_AzureDataLakeStorageLS')]",
+            "type": "Microsoft.DataFactory/factories/linkedServices",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "annotations": [],
+                "type": "AzureBlobFS",
+                "typeProperties": {
+                    "url": "[parameters('qde_AzureDataLakeStorageLS_properties_typeProperties_url')]",
+                    "accountKey": {
+                        "type": "AzureKeyVaultSecret",
+                        "store": {
+                            "referenceName": "qde_KeyVaultLS",
+                            "type": "LinkedServiceReference"
+                        },
+                        "secretName": "datalakekey32"
+                    }
+                }
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/linkedServices/qde_KeyVaultLS')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/qde_azureSqlDatabaseLS')]",
+            "type": "Microsoft.DataFactory/factories/linkedServices",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "annotations": [],
+                "type": "AzureSqlDatabase",
+                "typeProperties": {
+                    "connectionString": "[parameters('qde_azureSqlDatabaseLS_connectionString')]",
+                    "password": {
+                        "type": "AzureKeyVaultSecret",
+                        "store": {
+                            "referenceName": "qde_KeyVaultLS",
+                            "type": "LinkedServiceReference"
+                        },
+                        "secretName": "sqldb-pw"
+                    }
+                }
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/linkedServices/qde_KeyVaultLS')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/orderDetailsTable')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "qde_azureSqlDatabaseLS",
+                    "type": "LinkedServiceReference"
+                },
+                "folder": {
+                    "name": "inputNorthwindDS"
+                },
+                "annotations": [],
+                "type": "AzureSqlTable",
+                "schema": [
+                    {
+                        "name": "OrderID",
+                        "type": "int",
+                        "precision": 10
+                    },
+                    {
+                        "name": "ProductID",
+                        "type": "int",
+                        "precision": 10
+                    },
+                    {
+                        "name": "UnitPrice",
+                        "type": "money",
+                        "precision": 19,
+                        "scale": 4
+                    },
+                    {
+                        "name": "Quantity",
+                        "type": "smallint",
+                        "precision": 5
+                    },
+                    {
+                        "name": "Discount",
+                        "type": "real",
+                        "precision": 7
+                    }
+                ],
+                "typeProperties": {
+                    "schema": "dbo",
+                    "table": "Order Details"
+                }
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/linkedServices/qde_azureSqlDatabaseLS')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/shippersTable')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "qde_azureSqlDatabaseLS",
+                    "type": "LinkedServiceReference"
+                },
+                "folder": {
+                    "name": "inputNorthwindDS"
+                },
+                "annotations": [],
+                "type": "AzureSqlTable",
+                "schema": [
+                    {
+                        "name": "ShipperID",
+                        "type": "int",
+                        "precision": 10
+                    },
+                    {
+                        "name": "CompanyName",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "Phone",
+                        "type": "nvarchar"
+                    }
+                ],
+                "typeProperties": {
+                    "schema": "dbo",
+                    "table": "Shippers"
+                }
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/linkedServices/qde_azureSqlDatabaseLS')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/order_detailsTable')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "qde_azureSqlDatabaseLS",
+                    "type": "LinkedServiceReference"
+                },
+                "folder": {
+                    "name": "inputNorthwindDS"
+                },
+                "annotations": [],
+                "type": "AzureSqlTable",
+                "schema": [
+                    {
+                        "name": "OrderID",
+                        "type": "int",
+                        "precision": 10
+                    },
+                    {
+                        "name": "ProductID",
+                        "type": "int",
+                        "precision": 10
+                    },
+                    {
+                        "name": "UnitPrice",
+                        "type": "money",
+                        "precision": 19,
+                        "scale": 4
+                    },
+                    {
+                        "name": "Quantity",
+                        "type": "smallint",
+                        "precision": 5
+                    },
+                    {
+                        "name": "Discount",
+                        "type": "real",
+                        "precision": 7
+                    }
+                ],
+                "typeProperties": {
+                    "schema": "dbo",
+                    "table": "Order Details"
+                }
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/linkedServices/qde_azureSqlDatabaseLS')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/customersTable')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "qde_azureSqlDatabaseLS",
+                    "type": "LinkedServiceReference"
+                },
+                "folder": {
+                    "name": "inputNorthwindDS"
+                },
+                "annotations": [],
+                "type": "AzureSqlTable",
+                "schema": [],
+                "typeProperties": {
+                    "schema": "dbo",
+                    "table": "Customers"
+                }
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/linkedServices/qde_azureSqlDatabaseLS')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/categoriesTable')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "qde_azureSqlDatabaseLS",
+                    "type": "LinkedServiceReference"
+                },
+                "folder": {
+                    "name": "inputNorthwindDS"
+                },
+                "annotations": [],
+                "type": "AzureSqlTable",
+                "schema": [
+                    {
+                        "name": "CategoryID",
+                        "type": "int",
+                        "precision": 10
+                    },
+                    {
+                        "name": "CategoryName",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "Description",
+                        "type": "ntext"
+                    },
+                    {
+                        "name": "Picture",
+                        "type": "image"
+                    }
+                ],
+                "typeProperties": {
+                    "schema": "dbo",
+                    "table": "Categories"
+                }
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/linkedServices/qde_azureSqlDatabaseLS')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/employeesTable')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "qde_azureSqlDatabaseLS",
+                    "type": "LinkedServiceReference"
+                },
+                "folder": {
+                    "name": "inputNorthwindDS"
+                },
+                "annotations": [],
+                "type": "AzureSqlTable",
+                "schema": [
+                    {
+                        "name": "EmployeeID",
+                        "type": "int",
+                        "precision": 10
+                    },
+                    {
+                        "name": "LastName",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "FirstName",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "Title",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "TitleOfCourtesy",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "BirthDate",
+                        "type": "datetime",
+                        "precision": 23,
+                        "scale": 3
+                    },
+                    {
+                        "name": "HireDate",
+                        "type": "datetime",
+                        "precision": 23,
+                        "scale": 3
+                    },
+                    {
+                        "name": "Address",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "City",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "Region",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "PostalCode",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "Country",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "HomePhone",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "Extension",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "Photo",
+                        "type": "image"
+                    },
+                    {
+                        "name": "Notes",
+                        "type": "ntext"
+                    },
+                    {
+                        "name": "ReportsTo",
+                        "type": "int",
+                        "precision": 10
+                    },
+                    {
+                        "name": "PhotoPath",
+                        "type": "nvarchar"
+                    }
+                ],
+                "typeProperties": {
+                    "schema": "dbo",
+                    "table": "Employees"
+                }
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/linkedServices/qde_azureSqlDatabaseLS')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/suppliersTable')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "qde_azureSqlDatabaseLS",
+                    "type": "LinkedServiceReference"
+                },
+                "folder": {
+                    "name": "inputNorthwindDS"
+                },
+                "annotations": [],
+                "type": "AzureSqlTable",
+                "schema": [
+                    {
+                        "name": "SupplierID",
+                        "type": "int",
+                        "precision": 10
+                    },
+                    {
+                        "name": "CompanyName",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "ContactName",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "ContactTitle",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "Address",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "City",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "Region",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "PostalCode",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "Country",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "Phone",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "Fax",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "HomePage",
+                        "type": "ntext"
+                    }
+                ],
+                "typeProperties": {
+                    "schema": "dbo",
+                    "table": "Suppliers"
+                }
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/linkedServices/qde_azureSqlDatabaseLS')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/productsTable')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "qde_azureSqlDatabaseLS",
+                    "type": "LinkedServiceReference"
+                },
+                "folder": {
+                    "name": "inputNorthwindDS"
+                },
+                "annotations": [],
+                "type": "AzureSqlTable",
+                "schema": [
+                    {
+                        "name": "ProductID",
+                        "type": "int",
+                        "precision": 10
+                    },
+                    {
+                        "name": "ProductName",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "SupplierID",
+                        "type": "int",
+                        "precision": 10
+                    },
+                    {
+                        "name": "CategoryID",
+                        "type": "int",
+                        "precision": 10
+                    },
+                    {
+                        "name": "QuantityPerUnit",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "UnitPrice",
+                        "type": "money",
+                        "precision": 19,
+                        "scale": 4
+                    },
+                    {
+                        "name": "UnitsInStock",
+                        "type": "smallint",
+                        "precision": 5
+                    },
+                    {
+                        "name": "UnitsOnOrder",
+                        "type": "smallint",
+                        "precision": 5
+                    },
+                    {
+                        "name": "ReorderLevel",
+                        "type": "smallint",
+                        "precision": 5
+                    },
+                    {
+                        "name": "Discontinued",
+                        "type": "bit"
+                    }
+                ],
+                "typeProperties": {
+                    "schema": "dbo",
+                    "table": "Products"
+                }
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/linkedServices/qde_azureSqlDatabaseLS')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/ordersTable')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "qde_azureSqlDatabaseLS",
+                    "type": "LinkedServiceReference"
+                },
+                "folder": {
+                    "name": "inputNorthwindDS"
+                },
+                "annotations": [],
+                "type": "AzureSqlTable",
+                "schema": [
+                    {
+                        "name": "OrderID",
+                        "type": "int",
+                        "precision": 10
+                    },
+                    {
+                        "name": "CustomerID",
+                        "type": "nchar"
+                    },
+                    {
+                        "name": "EmployeeID",
+                        "type": "int",
+                        "precision": 10
+                    },
+                    {
+                        "name": "OrderDate",
+                        "type": "datetime",
+                        "precision": 23,
+                        "scale": 3
+                    },
+                    {
+                        "name": "RequiredDate",
+                        "type": "datetime",
+                        "precision": 23,
+                        "scale": 3
+                    },
+                    {
+                        "name": "ShippedDate",
+                        "type": "datetime",
+                        "precision": 23,
+                        "scale": 3
+                    },
+                    {
+                        "name": "ShipVia",
+                        "type": "int",
+                        "precision": 10
+                    },
+                    {
+                        "name": "Freight",
+                        "type": "money",
+                        "precision": 19,
+                        "scale": 4
+                    },
+                    {
+                        "name": "ShipName",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "ShipAddress",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "ShipCity",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "ShipRegion",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "ShipPostalCode",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "ShipCountry",
+                        "type": "nvarchar"
+                    }
+                ],
+                "typeProperties": {
+                    "schema": "dbo",
+                    "table": "Orders"
+                }
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/linkedServices/qde_azureSqlDatabaseLS')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/employeesParquet')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "qde_AzureDataLakeStorageLS",
+                    "type": "LinkedServiceReference"
+                },
+                "parameters": {
+                    "year_p": {
+                        "type": "int",
+                        "defaultValue": 1996
+                    },
+                    "month_p": {
+                        "type": "int",
+                        "defaultValue": 7
+                    },
+                    "day_p": {
+                        "type": "int",
+                        "defaultValue": 16
+                    }
+                },
+                "folder": {
+                    "name": "preparedNorthwindDS"
+                },
+                "annotations": [],
+                "type": "Parquet",
+                "typeProperties": {
+                    "location": {
+                        "type": "AzureBlobFSLocation",
+                        "folderPath": {
+                            "value": "@concat('prepared/employees/year=', string(dataset().year_p), '/month=', string(dataset().month_p), '/day=', string(dataset().day_p))",
+                            "type": "Expression"
+                        },
+                        "fileSystem": "northwind"
+                    },
+                    "compressionCodec": "snappy"
+                },
+                "schema": []
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/linkedServices/qde_AzureDataLakeStorageLS')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/regionParquet')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "qde_AzureDataLakeStorageLS",
+                    "type": "LinkedServiceReference"
+                },
+                "parameters": {
+                    "year_p": {
+                        "type": "int",
+                        "defaultValue": 1996
+                    },
+                    "month_p": {
+                        "type": "int",
+                        "defaultValue": 7
+                    },
+                    "day_p": {
+                        "type": "int",
+                        "defaultValue": 16
+                    }
+                },
+                "folder": {
+                    "name": "preparedNorthwindDS"
+                },
+                "annotations": [],
+                "type": "Parquet",
+                "typeProperties": {
+                    "location": {
+                        "type": "AzureBlobFSLocation",
+                        "folderPath": {
+                            "value": "@concat('prepared/region/year=', string(dataset().year_p), '/month=', string(dataset().month_p), '/day=', string(dataset().day_p))",
+                            "type": "Expression"
+                        },
+                        "fileSystem": "northwind"
+                    },
+                    "compressionCodec": "snappy"
+                },
+                "schema": []
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/linkedServices/qde_AzureDataLakeStorageLS')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/categoriesParquet')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "qde_AzureDataLakeStorageLS",
+                    "type": "LinkedServiceReference"
+                },
+                "parameters": {
+                    "year_p": {
+                        "type": "int",
+                        "defaultValue": 1996
+                    },
+                    "month_p": {
+                        "type": "int",
+                        "defaultValue": 7
+                    },
+                    "day_p": {
+                        "type": "int",
+                        "defaultValue": 16
+                    }
+                },
+                "folder": {
+                    "name": "preparedNorthwindDS"
+                },
+                "annotations": [],
+                "type": "Parquet",
+                "typeProperties": {
+                    "location": {
+                        "type": "AzureBlobFSLocation",
+                        "folderPath": {
+                            "value": "@concat('prepared/categories/year=', string(dataset().year_p), '/month=', string(dataset().month_p), '/day=', string(dataset().day_p))",
+                            "type": "Expression"
+                        },
+                        "fileSystem": "northwind"
+                    },
+                    "compressionCodec": "snappy"
+                },
+                "schema": []
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/linkedServices/qde_AzureDataLakeStorageLS')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/customersParquet')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "qde_AzureDataLakeStorageLS",
+                    "type": "LinkedServiceReference"
+                },
+                "parameters": {
+                    "year_p": {
+                        "type": "int",
+                        "defaultValue": 1996
+                    },
+                    "month_p": {
+                        "type": "int",
+                        "defaultValue": 7
+                    },
+                    "day_p": {
+                        "type": "int",
+                        "defaultValue": 16
+                    }
+                },
+                "folder": {
+                    "name": "preparedNorthwindDS"
+                },
+                "annotations": [],
+                "type": "Parquet",
+                "typeProperties": {
+                    "location": {
+                        "type": "AzureBlobFSLocation",
+                        "folderPath": {
+                            "value": "@concat('prepared/customers/year=', string(dataset().year_p), '/month=', string(dataset().month_p), '/day=', string(dataset().day_p))",
+                            "type": "Expression"
+                        },
+                        "fileSystem": "northwind"
+                    },
+                    "compressionCodec": "snappy"
+                },
+                "schema": []
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/linkedServices/qde_AzureDataLakeStorageLS')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/employeeTerritoriesParquet')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "qde_AzureDataLakeStorageLS",
+                    "type": "LinkedServiceReference"
+                },
+                "parameters": {
+                    "year_p": {
+                        "type": "int",
+                        "defaultValue": 1996
+                    },
+                    "month_p": {
+                        "type": "int",
+                        "defaultValue": 7
+                    },
+                    "day_p": {
+                        "type": "int",
+                        "defaultValue": 16
+                    }
+                },
+                "folder": {
+                    "name": "preparedNorthwindDS"
+                },
+                "annotations": [],
+                "type": "Parquet",
+                "typeProperties": {
+                    "location": {
+                        "type": "AzureBlobFSLocation",
+                        "folderPath": {
+                            "value": "@concat('prepared/employeeTerritories/year=', string(dataset().year_p), '/month=', string(dataset().month_p), '/day=', string(dataset().day_p))",
+                            "type": "Expression"
+                        },
+                        "fileSystem": "northwind"
+                    },
+                    "compressionCodec": "snappy"
+                },
+                "schema": []
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/linkedServices/qde_AzureDataLakeStorageLS')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/productsParquet')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "qde_AzureDataLakeStorageLS",
+                    "type": "LinkedServiceReference"
+                },
+                "parameters": {
+                    "year_p": {
+                        "type": "int",
+                        "defaultValue": 1996
+                    },
+                    "month_p": {
+                        "type": "int",
+                        "defaultValue": 7
+                    },
+                    "day_p": {
+                        "type": "int",
+                        "defaultValue": 16
+                    }
+                },
+                "folder": {
+                    "name": "preparedNorthwindDS"
+                },
+                "annotations": [],
+                "type": "Parquet",
+                "typeProperties": {
+                    "location": {
+                        "type": "AzureBlobFSLocation",
+                        "folderPath": {
+                            "value": "@concat('prepared/products/year=', string(dataset().year_p), '/month=', string(dataset().month_p), '/day=', string(dataset().day_p))",
+                            "type": "Expression"
+                        },
+                        "fileSystem": "northwind"
+                    },
+                    "compressionCodec": "snappy"
+                },
+                "schema": []
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/linkedServices/qde_AzureDataLakeStorageLS')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/orderDetailsParquet')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "qde_AzureDataLakeStorageLS",
+                    "type": "LinkedServiceReference"
+                },
+                "parameters": {
+                    "year_p": {
+                        "type": "int",
+                        "defaultValue": 1996
+                    },
+                    "month_p": {
+                        "type": "int",
+                        "defaultValue": 7
+                    },
+                    "day_p": {
+                        "type": "int",
+                        "defaultValue": 16
+                    }
+                },
+                "folder": {
+                    "name": "preparedNorthwindDS"
+                },
+                "annotations": [],
+                "type": "Parquet",
+                "typeProperties": {
+                    "location": {
+                        "type": "AzureBlobFSLocation",
+                        "folderPath": {
+                            "value": "@concat('prepared/orderDetails/year=', string(dataset().year_p), '/month=', string(dataset().month_p), '/day=', string(dataset().day_p))",
+                            "type": "Expression"
+                        },
+                        "fileSystem": "northwind"
+                    },
+                    "compressionCodec": "snappy"
+                },
+                "schema": []
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/linkedServices/qde_AzureDataLakeStorageLS')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/ordersParquet')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "qde_AzureDataLakeStorageLS",
+                    "type": "LinkedServiceReference"
+                },
+                "parameters": {
+                    "year_p": {
+                        "type": "int",
+                        "defaultValue": 1996
+                    },
+                    "month_p": {
+                        "type": "int",
+                        "defaultValue": 2
+                    },
+                    "day_p": {
+                        "type": "int",
+                        "defaultValue": 16
+                    }
+                },
+                "folder": {
+                    "name": "preparedNorthwindDS"
+                },
+                "annotations": [],
+                "type": "Parquet",
+                "typeProperties": {
+                    "location": {
+                        "type": "AzureBlobFSLocation",
+                        "folderPath": {
+                            "value": "@concat('prepared/orders/year=', string(dataset().year_p), '/month=', string(dataset().month_p), '/day=', string(dataset().day_p))",
+                            "type": "Expression"
+                        },
+                        "fileSystem": "northwind"
+                    },
+                    "compressionCodec": "snappy"
+                },
+                "schema": []
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/linkedServices/qde_AzureDataLakeStorageLS')]"
+            ]
+        }
+    ]
+}
